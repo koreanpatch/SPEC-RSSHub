@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+    rsshub:
+        build:
+            context: ./sunbi-rsshub # path to your fork
+            dockerfile: Dockerfile
+        image: sunbi/rsshub:local
+        restart: unless-stopped
+        ports:
+            - '1200:1200'
+        environment:
+            NODE_ENV: production
+            CACHE_TYPE: redis
+            CACHE_EXPIRE: 600
+            REDIS_URL: redis://redis:6379/
+            # Access control - only allow calls from your own services
+            ACCESS_KEY: '${RSSHUB_ACCESS_KEY}'
+            ALLOW_LOCALHOST: 'true'
+        # Naver auth (for cafe, etc.)
+        # NAVER_COOKIE: "NID_AUT=...; NID_SES=..."
+        depends_on:
+            - redis
+        networks:
+            - sunbi-internal
+
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        volumes:
+            - rsshub_redis:/data
+        networks:
+            - sunbi-internal
+
+networks:
+    sunbi-internal:
+        name: sunbi-internal
+
+volumes:
+    rsshub_redis:
