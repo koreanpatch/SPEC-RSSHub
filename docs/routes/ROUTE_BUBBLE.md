@@ -63,7 +63,7 @@ const previewText = $('[class*="message-preview"], [class*="latest-message"]').f
 const lastActive = $('[class*="last-active"], time').first().attr('datetime') ?? $('[class*="last-active"], time').first().text().trim();
 ```
 
-## `extra` Payload Shape
+## `_extra` payload shape
 
 ```typescript
 {

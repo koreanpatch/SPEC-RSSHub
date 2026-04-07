@@ -38,7 +38,7 @@
 
 17. **No Explicit Null**: No need to explicitly set a property to `null` if it does not exist - just omit it.
 
-18. **Valid Item Properties**: Only use properties defined in [lib/types. ts](https://github.com/DIYgod/RSSHub/blob/master/lib/types.ts). Custom properties like `avatar`, `bio` will be ignored by RSSHub.
+18. **Valid Item Properties**: Only use properties defined on `DataItem` in **this repo’s** [`lib/types.ts`](lib/types.ts). Upstream RSSHub ignores arbitrary keys on items; this fork’s type is authoritative here. Use **`_extra`** for structured Sunbi payloads (discriminated by `type`); do not add ad-hoc top-level fields. Note: `author.avatar` etc. are part of the typed `author` shape — random keys such as `avatar` or `bio` at the item root are still invalid.
 
 19. **String Methods**: Use `startsWith()` instead of `includes()` when checking if a string begins with a specific prefix.
 

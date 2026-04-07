@@ -108,7 +108,7 @@ Routes added for Sunbi are documented in `docs/routes/`:
 | `ROUTE_WEVERSE.md`       | `weverse`          | Weverse artist feed                                    |
 | `ROUTE_BUBBLE.md`        | `bubble`           | Bubble artist notifications                            |
 
-All Sunbi routes return an `extra` field on each `DataItem` with a typed payload (e.g. `{ type: 'youtube_video', videoId, transcript, ... }`). This feeds downstream Sunbi ingestion.
+All Sunbi routes attach structured metadata on each `DataItem` using the **`_extra`** field (see `lib/types.ts`). Payloads are discriminated with a `type` field (e.g. `{ type: 'youtube_video', videoId, transcript, ... }`, `{ type: 'webtoon_episode', ... }`). JSON feeds expose this as `_extra`; this feeds downstream Sunbi ingestion. Do not use a bare `extra` property — it is not on `DataItem`.
 
 ### Deployment Targets
 

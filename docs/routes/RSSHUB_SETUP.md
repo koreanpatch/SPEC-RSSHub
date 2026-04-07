@@ -183,14 +183,13 @@ docker compose up -d
 | `weverse/artist/*`                      | 5 min                 | Posts/lives are real-time |
 | `bubble/artist/*`                       | 10 min                | Message notifications     |
 
-## Verifying the `extra` Field
+## Verifying the `_extra` field
 
-RSSHub's `?format=json` response includes `item[n].extra` if your handler
-returns it. Confirm it's present:
+JSON Feed output (`?format=json`) uses the key **`_extra`** on each item (see `lib/views/json.ts`). Confirm it is present:
 
 ```bash
 curl "http://localhost:1200/naver/webtoon/series/758037?format=json" | \
-  jq '.item[0].extra'
+  jq '.items[0]._extra'
 ```
 
 Expected for Naver Webtoon:

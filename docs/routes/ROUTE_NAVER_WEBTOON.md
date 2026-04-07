@@ -76,7 +76,9 @@ const thumb = $el.find('img[src*="comic.naver.com"]').first().attr('src');
 
 Without `Accept-Language: ko-KR`, Naver returns an error or redirect.
 
-## `extra` Payload Shape
+## `_extra` payload shape
+
+Set on each `DataItem` as `_extra: { ... }` (see `lib/types.ts`). Shape:
 
 ```typescript
 {
