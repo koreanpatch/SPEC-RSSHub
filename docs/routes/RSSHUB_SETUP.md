@@ -84,6 +84,11 @@ NETFLIX_COOKIE=<optional; full episode data>
 
 NAVER_COOKIE=<optional; cafe/paywalled webtoon content>
   # How to get: comic.naver.com → DevTools → Application → Cookies
+
+# KR Residential Proxy (see Proxy Configuration section below)
+HTTP_PROXY=
+HTTPS_PROXY=
+NO_PROXY=localhost,redis
 ```
 
 ## Docker Compose (production)
@@ -115,6 +120,10 @@ services:
             # Limit concurrent requests to avoid anti-bot triggers
             REQUEST_TIMEOUT: '20000'
             REQUEST_RETRY: '2'
+            # KR residential proxy (leave blank to go direct)
+            HTTP_PROXY: '${HTTP_PROXY:-}'
+            HTTPS_PROXY: '${HTTPS_PROXY:-}'
+            NO_PROXY: '${NO_PROXY:-localhost,redis}'
         depends_on:
             redis:
                 condition: service_healthy
@@ -171,6 +180,73 @@ docker compose build
 docker compose up -d
 ```
 
+## Proxy Configuration
+
+RSSHub's `lib/utils/ofetch.ts` reads `HTTP_PROXY` / `HTTPS_PROXY` from the
+environment and applies them to all outbound requests automatically. No code
+changes are needed — proxy support is purely a deployment configuration.
+
+### Why a KR residential proxy
+
+Naver's anti-bot systems are IP-origin aware. Datacenter IPs (AWS, GCP, etc.)
+and foreign IPs are held to higher scrutiny than Korean residential addresses.
+A KR residential proxy ensures all Naver requests appear to originate from a
+normal Korean user, regardless of where your server is hosted.
+
+### Recommended provider
+
+**Smartproxy residential** (`smartproxy.com`) — has a Korean residential pool,
+supports HTTP CONNECT, and rotates the exit IP automatically on each new
+connection. At this service's request volume (~tens of requests/day to Naver
+after cache), cost is under $1/month.
+
+### Setup
+
+1. Sign up at smartproxy.com → Residential Proxies → create a sub-user
+2. Note your username and password
+3. Add to `.env`:
+
+```bash
+# country-KR forces a Korean residential exit node
+# Port 10000 = rotating (new IP per connection)
+# Port 10001 = sticky session (same IP for 10 min)
+HTTP_PROXY=http://user-country-KR:yourpassword@gate.smartproxy.com:10000
+HTTPS_PROXY=http://user-country-KR:yourpassword@gate.smartproxy.com:10000
+
+# Only proxy Naver — YouTube, Weverse, etc. go direct (faster)
+NO_PROXY=localhost,redis,youtube.com,weverse.io,viki.com,netflix.com,bubble.us
+```
+
+4. Restart the stack: `docker compose up -d`
+
+### Verify the proxy is working
+
+```bash
+# Should show a Korean IP, not your server's IP
+curl -x "$HTTP_PROXY" https://api.ipify.org
+
+# Should return webtoon feed data (not a Naver block/redirect)
+curl "http://localhost:1200/naver/webtoon/series/758037?format=json&key=$ACCESS_KEY" \
+  | jq '.items[0].title'
+```
+
+### Alternative: Gluetun VPN sidecar
+
+If you prefer a VPN over a proxy service, add a
+[gluetun](https://github.com/qdm12/gluetun) sidecar to `docker-compose.yml`
+and route the `rsshub` container's traffic through it via
+`network_mode: "service:gluetun"`. This works with any VPN provider that has
+Korean servers (Mullvad, ProtonVPN, etc.) but rotates IP only on reconnect
+rather than per-request, so it provides less IP diversity than a residential
+proxy pool.
+
+### When you don't need a proxy
+
+If your server is hosted in Korea (KT, SKB, or KR-region cloud), your IP is
+already Korean residential-adjacent and Naver is unlikely to block you at
+typical RSS polling rates. Add a proxy only if you observe 429s or redirect
+loops in `docker compose logs -f rsshub`.
+
 ## TTL Reference by Route
 
 | Route                                   | Cache TTL             | Why                       |
@@ -183,14 +259,13 @@ docker compose up -d
 | `weverse/artist/*`                      | 5 min                 | Posts/lives are real-time |
 | `bubble/artist/*`                       | 10 min                | Message notifications     |
 
-## Verifying the `extra` Field
+## Verifying the `_extra` Field
 
-RSSHub's `?format=json` response includes `item[n].extra` if your handler
-returns it. Confirm it's present:
+JSON Feed output (`?format=json`) uses the key **`_extra`** on each item (see `lib/views/json.ts`). Confirm it is present:
 
 ```bash
-curl "http://localhost:1200/naver/webtoon/series/758037?format=json" | \
-  jq '.item[0].extra'
+curl "http://localhost:1200/naver/webtoon/series/758037?format=json&key=$ACCESS_KEY" | \
+  jq '.items[0]._extra'
 ```
 
 Expected for Naver Webtoon:
