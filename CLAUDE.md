@@ -99,14 +99,14 @@ Both clients share proxy support, retry logic, and cookie jar handling configure
 
 Routes added for Sunbi are documented in `docs/routes/`:
 
-| Doc                      | Route namespace    | Purpose                                                |
-| ------------------------ | ------------------ | ------------------------------------------------------ |
-| `ROUTE_YOUTUBE.md`       | `sunbi-youtube`    | YouTube channel feed with transcript + `extra` payload |
-| `ROUTE_NAVER_WEBTOON.md` | `naver` (extended) | Naver Webtoon series episodes                          |
-| `ROUTE_VIKI.md`          | `viki`             | Viki drama series episodes                             |
-| `ROUTE_NETFLIX.md`       | `netflix`          | Netflix drama episodes                                 |
-| `ROUTE_WEVERSE.md`       | `weverse`          | Weverse artist feed                                    |
-| `ROUTE_BUBBLE.md`        | `bubble`           | Bubble artist notifications                            |
+| Doc                      | Route namespace    | Purpose                                                 |
+| ------------------------ | ------------------ | ------------------------------------------------------- |
+| `ROUTE_YOUTUBE.md`       | `sunbi-youtube`    | YouTube channel feed with transcript + `_extra` payload |
+| `ROUTE_NAVER_WEBTOON.md` | `naver` (extended) | Naver Webtoon series episodes                           |
+| `ROUTE_VIKI.md`          | `viki`             | Viki drama series episodes                              |
+| `ROUTE_NETFLIX.md`       | `netflix`          | Netflix drama episodes                                  |
+| `ROUTE_WEVERSE.md`       | `weverse`          | Weverse artist feed                                     |
+| `ROUTE_BUBBLE.md`        | `bubble`           | Bubble artist notifications                             |
 
 All Sunbi routes attach structured metadata on each `DataItem` using the **`_extra`** field (see `lib/types.ts`). Payloads are discriminated with a `type` field (e.g. `{ type: 'youtube_video', videoId, transcript, ... }`, `{ type: 'webtoon_episode', ... }`). JSON feeds expose this as `_extra`; this feeds downstream Sunbi ingestion. Do not use a bare `extra` property — it is not on `DataItem`.
 
