@@ -5,7 +5,9 @@ argument-hint: '<issue or feature description>'
 ---
 
 <objective>
-Take an issue or feature description, perform deep parallel codebase analysis, and produce a comprehensive implementation plan grounded in the actual code. The plan is written to `.planning/plans/` and contains specific files, functions, line ranges, and ordered steps — ready for execution.
+Take an issue or feature description, perform deep parallel codebase analysis, and produce a comprehensive implementation plan grounded in the actual code. The plan is written to `.planning/plans/` and contains specific files, functions, line ranges, and an **execution checklist** (`- [ ]` tasks) — ready for the **`/do`** skill to execute.
+
+**Worktree + git:** Use **Worktree Guard** first; **§2.7** commits and opens the PR after the plan is final.
 
 This skill only plans. It never starts implementing.
 </objective>
@@ -19,6 +21,8 @@ User input: $ARGUMENTS
 ## Worktree Guard
 
 Follow the procedure in `.claude/skills/_common/worktree-guard.md` with `$SKILL_NAME=plan`.
+
+**`/plan` default:** When asked, **recommend Yes** to create a worktree (`plan/<slug>`).
 
 ## 0. Parse Input
 
@@ -85,6 +89,16 @@ Wait for ALL analysis agents to complete before proceeding.
 
 Using all agent findings, write a comprehensive implementation plan to `.planning/plans/plan-{slug}.md` where `{slug}` is a kebab-cased short name derived from `$ISSUE`.
 
+### Checklist rules (`/do` compatibility)
+
+The **`/do`** skill discovers tasks by scanning for `- [ ]` lines. To avoid pulling narrative prose into the task list:
+
+- Put **every implementation task** as a **single line** starting with `- [ ]` under **`## Execution checklist`** only.
+- In **Goal**, **Current State**, **Approach**, and **Testing Strategy**, use normal bullets (`-` or `*`) **without** `[ ]` so they are not mistaken for `/do` tasks.
+- Each checklist line must be **self-contained**: include target path(s), function or region (with line numbers when known), and the action — enough for an implementer to execute without opening other sections.
+- Order checklist items by dependency. Optionally group with `### Wave 1 — parallel` / `### Wave 2` when some tasks can run in parallel; keep one `- [ ]` per line inside those groups.
+- Do **not** add `- [ ]` checklist items for “run the full test suite” or generic verification unless you intend `/do` to treat them as separate agent tasks; **`/do`** runs project verification after implementation. Prefer describing verification commands in **Testing Strategy** as plain bullets.
+
 The plan file must follow this structure:
 
 ```markdown
@@ -96,7 +110,7 @@ The plan file must follow this structure:
 
 ## Goal
 
-{What we're trying to achieve and why. 2-3 sentences.}
+{What we're trying to achieve and why. 2-3 sentences. Use plain bullets, not `- [ ]`.}
 
 ## Current State
 
@@ -106,33 +120,21 @@ The plan file must follow this structure:
 
 {High-level strategy in 2-4 sentences. Why this approach over alternatives.}
 
-## Detailed Steps
+## Execution checklist
 
-{Numbered, ordered steps. Each step includes:}
+{All discrete implementation work as `- [ ]` lines, dependency order. Example:}
 
-### Step 1: {title}
-
-**Files:** `path/to/file.py` (modify), `path/to/new_file.py` (create)
-
-{What to do and why. Be specific:}
-
-- Add function `foo()` to `module.py` following the pattern in `similar_module.py`
-- Modify class `Bar` to accept new parameter `baz`
-- Update SQL schema in `sql/migrations/` to include new field
-
-**Why this order:** {dependency explanation if relevant}
-
-### Step 2: {title}
-
-...
+- [ ] Add `lib/routes/sunbi-example/namespace.ts` and `route.ts` following `lib/routes/sunbi-youtube/`; export from `namespace.ts` per RSSHub conventions.
+- [ ] Run `pnpm build:routes` so `lib/registry` picks up the new route.
+- [ ] Add `lib/routes/sunbi-example/route.test.ts` with msw mocks; follow patterns in `lib/setup.test.ts`.
 
 ## Testing Strategy
 
-{How to verify the implementation:}
+{Plain bullets — not `- [ ]`:}
 
 - Which existing tests to run to catch regressions
 - What new tests to write, following which patterns (reference specific test files as templates)
-- Run with: `uv run pytest <path>` or `uv run pytest tests/`
+- Run with: `pnpm vitest run <path>` or `pnpm test` as appropriate
 - Any edge cases to test specifically
 
 ## Risks & Mitigations
@@ -143,12 +145,11 @@ The plan file must follow this structure:
 
 ## Files Affected
 
-| File                                | Action | Purpose             |
-| ----------------------------------- | ------ | ------------------- |
-| `app/routers/foo.py`                | Modify | Add new endpoint    |
-| `scripts/new_script.py`             | Create | New processing step |
-| `tests/unit/test_foo.py`            | Create | Test new feature    |
-| `sql/migrations/0010_add_field.sql` | Create | Schema change       |
+| File                                     | Action | Purpose          |
+| ---------------------------------------- | ------ | ---------------- |
+| `lib/routes/sunbi-example/route.ts`      | Create | Route handler    |
+| `lib/routes/sunbi-example/namespace.ts`  | Create | Namespace export |
+| `lib/routes/sunbi-example/route.test.ts` | Create | Tests            |
 ```
 
 ## 2.5. Pragmatist Review
@@ -164,7 +165,11 @@ Review the plan holistically before presenting it:
 - **Risk calibration**: Are the risks realistic? Downgrade inflated risks, upgrade dismissed ones. Add any risks the agents missed.
 - **Testing gap**: Does the testing strategy actually cover the critical paths, or just the happy path?
 
-Edit the plan file in-place to address any issues found. Add a brief `## Pragmatist Notes` section at the bottom documenting what was adjusted and why.
+Edit the plan file in-place to address any issues found. Add a brief `## Pragmatist Notes` section at the bottom documenting what was adjusted and why. Confirm **Execution checklist** items are ordered correctly, unambiguous, and use `- [ ]` only in that section (plus any optional **Verification checklist** you explicitly want `/do` to execute as tasks).
+
+## 2.7 Commit & publish (git checkpoints)
+
+After §2.5 (plan final), follow `.claude/skills/_common/auto-finalize.md`. Stage **only** `.planning/plans/plan-{slug}.md` (unless `docs/TODO.md` also changed). Use commit subject `docs: plan: <short title> — <N> execution items`. In the PR body, set **Summary** to the plan goal + link to the plan file; **Decisions** from Pragmatist Notes (use `N/A — doc-only plan` if `pre-pr-gate.sh` requires non-empty and there are none); **Test plan:** note doc-only or `N/A`.
 
 ## 3. Report to User
 
@@ -172,9 +177,12 @@ Print the full plan inline in the response (so the user can read it without open
 
 Tell the user:
 
+- Branch / worktree path if applicable
 - The plan file location (`.planning/plans/plan-{slug}.md`)
-- Number of steps
-- Number of files affected
+- Count of **Execution checklist** items (`- [ ]` lines)
+- Number of files affected (from the table)
+- Short **commit SHA** and **PR URL** from §2.7
+- To run implementation with **`/do .planning/plans/plan-{slug}.md`** (or `/do` with the folder containing this file) on the **same branch**
 - Ask if they want adjustments before execution
 
 </process>
@@ -190,7 +198,8 @@ Tell the user:
 - The Prior Art agent is optional — only spawn it when the issue involves external libraries, APIs, or unfamiliar techniques. For purely internal refactors or features, 3 agents suffice.
 - If a plan file with the same slug already exists, ask the user if they want to overwrite or use a different name
 - Follow the project's conventions from CLAUDE.md when recommending file placement, naming, and patterns
-- Always activate the virtualenv: `source venv/bin/activate` before running Python commands
+- Every plan must include **`## Execution checklist`** with at least one `- [ ]` line; narrative sections must not use `- [ ]` task lines (use plain bullets) so **`/do`** parses a clean task list
+- Worktree when on primary checkout; §2.7 uses `auto-finalize.md` after the plan is final
 </rules>
 
 <success_criteria>
@@ -201,11 +210,13 @@ Tell the user:
 - [ ] Architecture, patterns, and dependencies thoroughly investigated
 - [ ] Plan written to `.planning/plans/plan-{slug}.md`
 - [ ] Plan contains specific file paths, function names, and line ranges
-- [ ] Steps are ordered with dependency reasoning
-- [ ] Testing strategy references `uv run pytest` and existing test patterns
+- [ ] **Execution checklist** present with `- [ ]` tasks only under that section (narrative sections use plain bullets)
+- [ ] Checklist items ordered with dependency reasoning
+- [ ] Testing strategy references `pnpm vitest` / `pnpm test` and existing test patterns
 - [ ] Risks identified with mitigations
 - [ ] Pragmatist review completed — plan is practical, coherent, and right-sized for the codebase
 - [ ] Files affected summary table is complete
 - [ ] Plan printed inline for user review
+- [ ] §2.7: `auto-finalize.md` completed; PR URL reported
 - [ ] User asked for adjustments before execution
       </success_criteria>

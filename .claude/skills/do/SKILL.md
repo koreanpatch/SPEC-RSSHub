@@ -7,7 +7,7 @@ argument-hint: '[markdown file or folder path]'
 <objective>
 Take a markdown file containing tasks (checkboxes, TODOs, action items), dispatch parallel agents to execute independent tasks, verify the work, and update the file to reflect completed items.
 
-All work is performed in the current project following its conventions (CLAUDE.md, .planning/ docs).
+All work is performed in the current project following its conventions (CLAUDE.md, .planning/ docs). Finish with **commit + push + PR** via `auto-finalize.md` (§7).
 </objective>
 
 <context>
@@ -102,13 +102,13 @@ Follow the procedure in `.claude/skills/_common/pragmatist-review.md`. Focus on 
 
 ## 5. Verify Work
 
-After ALL tasks are implemented and coherence review is complete, run `uv run pytest` to verify nothing is broken. Do NOT run tests earlier — not after individual waves, not mid-implementation. Tests run exactly once, here.
+After ALL tasks are implemented and coherence review is complete, run **`pnpm test`** or **`pnpm vitest run`** (scoped if appropriate) to verify nothing is broken. Do NOT run tests earlier — not after individual waves, not mid-implementation. Tests run exactly once, here.
 
 **Role**: Assume the role of a highly critical expert. Scrutinize every change, challenge assumptions, and flag anything that doesn't meet the highest standards of correctness.
 
 **Verification steps:**
 
-1. **Test check**: Run `uv run pytest` (or a targeted subset if changes are localized). If tests fail:
+1. **Test check**: Run `pnpm test` (or `pnpm vitest run <path>`). If tests fail:
     - Read the failure output
     - Trace failures to the changes made by agents
     - Fix the issues (batch-fix, not fix-test-fix-test cycles)
@@ -126,14 +126,20 @@ Edit `$FILE` to reflect the completed work:
 - If any tasks failed or were partially completed, add a note explaining what happened
 - Do NOT rewrite the file — make minimal, targeted edits
 
-## 7. Report to User
+## 7. Commit & publish (git checkpoints)
+
+After §5–6 succeed, follow `.claude/skills/_common/auto-finalize.md` (`make format`, stage changed files only, conventional commit, push, `gh pr create`). Commit subject: `feat:` / `fix:` + summary of completed checklist tasks.
+
+## 8. Report to User
 
 Tell the user:
 
+- Branch / worktree if applicable
 - How many tasks were completed out of total pending
 - Summary of what was done (1-2 lines per task)
 - Any tasks that failed or need follow-up
 - Verification results (test pass/fail)
+- Short **commit SHA** and **PR URL** from §7
 - Any files that were created or significantly modified
 
 </process>
@@ -143,11 +149,10 @@ Tell the user:
 - Never launch Wave N+1 until ALL Wave N agents have returned
 - Each agent prompt must be detailed and self-contained — agents have no shared context
 - Agents must NOT run the full test suite — only the orchestrator runs verification after all work is done
-- After all tasks are complete and verification passes, auto-commit following `.claude/skills/_common/auto-commit.md` with a descriptive message summarizing the work. Stage only the changed files with `git add`. If pre-commit hooks modify files, re-stage and retry once.
+- After all tasks are complete and verification passes, §7 runs **`auto-finalize.md`** (commit + push + PR). Do not publish before verification passes.
 - If the markdown file has fewer than 3 pending tasks, execute them directly instead of spawning agents (overhead not worth it)
 - If a task is ambiguous, prefer asking the user over guessing — use `AskUserQuestion`
 - Respect the project's conventions for file placement, naming, imports, and style
-- Always `source venv/bin/activate` or use `uv run` before running Python
 </rules>
 
 <success_criteria>
@@ -157,8 +162,9 @@ Tell the user:
 - [ ] Execution plan presented to user and confirmed
 - [ ] All independent tasks launched in parallel per wave
 - [ ] All tasks executed following project conventions
-- [ ] Verification (`uv run pytest`) passes
+- [ ] Verification (`pnpm test` / `pnpm vitest run`) passes
 - [ ] Pragmatist coherence review completed — cross-task consistency and codebase fit confirmed
 - [ ] Markdown file updated to reflect completed items
+- [ ] §7: `auto-finalize.md` complete; PR URL reported
 - [ ] User sees a clear summary of what was done
       </success_criteria>
