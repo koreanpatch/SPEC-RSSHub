@@ -72,7 +72,7 @@ const falcorData = JSON.parse(match[1]);
 }
 ```
 
-## `extra` Payload Shape
+## `_extra` payload shape
 
 ```typescript
 {

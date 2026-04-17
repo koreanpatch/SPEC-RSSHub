@@ -68,6 +68,11 @@ export type DataItem = {
         duration_in_seconds?: number;
     }>;
 
+    /**
+     * Structured metadata for consumers (JSON includes this key as `_extra`).
+     * Sunbi routes attach discriminated objects with a `type` field, e.g.
+     * `webtoon_episode`, `youtube_video` — see `docs/routes/` and `CLAUDE.md`.
+     */
     _extra?: Record<string, any> & {
         links?: Array<{
             url: string;

@@ -109,7 +109,7 @@ Base: `https://apis.naver.com/weverse/wevweb`
 }
 ```
 
-## `extra` Payload Shape
+## `_extra` payload shape
 
 ```typescript
 {

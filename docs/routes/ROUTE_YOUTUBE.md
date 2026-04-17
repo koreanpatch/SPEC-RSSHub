@@ -9,7 +9,7 @@
 ## Why a New Namespace
 
 Upstream RSSHub has `/youtube/channel/:id` but it does not fetch transcripts
-or enrich with the `extra` payload Sunbi needs. Using `sunbi-youtube` avoids
+or enrich with the `_extra` payload Sunbi needs. Using `sunbi-youtube` avoids
 conflict with upstream and makes our additions explicit.
 
 ## Route Path
@@ -93,7 +93,7 @@ transcript = result.map((t) => t.text).join(' ');
 
 Add to `package.json` in your fork if not already present.
 
-## `extra` Payload Shape
+## `_extra` payload shape
 
 ```typescript
 {

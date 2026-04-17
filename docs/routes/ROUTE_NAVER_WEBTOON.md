@@ -4,7 +4,7 @@
 
 ## File Location
 
-`lib/v2/naver/webtoon-series.ts`
+`lib/routes/naver/webtoon-series.ts` (see repo root `CLAUDE.md` — custom routes live under `lib/routes/`, not `lib/v2/`.)
 
 ## Route Path
 
@@ -34,9 +34,20 @@ Detects subscription intent on:
 
 All extract `titleId` from query params.
 
-## Selectors Reference
+## Runtime: JSON API (not HTML scraping)
 
-Naver uses CSS Modules (obfuscated class suffixes). Always provide fallbacks:
+The public episode list page is a client-rendered SPA (empty shell + JS). The route uses Naver’s **JSON APIs** instead of Cheerio/CSS selectors on HTML:
+
+| Endpoint                                | Purpose                                                                             |
+| --------------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /api/article/list/info?titleId=`   | Series title, thumbnails, authors, genre tags                                       |
+| `GET /api/article/list?titleId=&page=1` | Episodes (first page only per RSSHub fork policy; use common `limit` to trim items) |
+
+Episode links use `https://comic.naver.com/webtoon/detail?titleId=…&no=…`.
+
+## Selectors Reference (legacy / optional)
+
+If you ever scrape HTML again, Naver uses CSS Modules (obfuscated class suffixes). Always provide fallbacks:
 
 | Data          | Primary selector                          | Fallback                     |
 | ------------- | ----------------------------------------- | ---------------------------- |
@@ -69,14 +80,16 @@ const thumb = $el.find('img[src*="comic.naver.com"]').first().attr('src');
 ```typescript
 {
   'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.5',
-  'User-Agent': 'Mozilla/5.0 ... Chrome/124',
+  'User-Agent': config.trueUA, // RSSHub built-in realistic UA (see AGENTS.md)
   'Referer': 'https://comic.naver.com/',
 }
 ```
 
 Without `Accept-Language: ko-KR`, Naver returns an error or redirect.
 
-## `extra` Payload Shape
+## `_extra` payload shape
+
+Set on each `DataItem` as `_extra: { ... }` (see `lib/types.ts`). Shape:
 
 ```typescript
 {

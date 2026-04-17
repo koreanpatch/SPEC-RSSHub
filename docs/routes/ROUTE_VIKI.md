@@ -76,7 +76,7 @@ GET https://api.viki.io/v4/containers/{showId}/episodes.json
 }
 ```
 
-## `extra` Payload Shape
+## `_extra` payload shape
 
 ```typescript
 {
