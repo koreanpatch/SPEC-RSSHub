@@ -1,6 +1,6 @@
-# Sunbi RSSHub Remaining Work Checklist
+# SPEC RSSHub — remaining work checklist
 
-This checklist tracks what is left in `sunbi-rsshub` beyond "just write routes".
+This checklist tracks what is left in **`sunbi-rsshub`** beyond "just write routes" (RSSHub fork; **SPEC** is the `/spec/` route namespace).
 
 Status legend:
 
@@ -25,13 +25,13 @@ Status legend:
 
 - [x] `naver/webtoon-series` custom route is present (`lib/routes/naver/webtoon-series.ts`)
 
-## Remaining from Sunbi route plan
+## Remaining SPEC route plan
 
-- [ ] `sunbi-youtube` namespace + route(s)
-- [ ] `viki` namespace + route(s)
-- [ ] `weverse` namespace + route(s)
-- [ ] `bubble` namespace + route(s)
-- [ ] `netflix` Sunbi-targeted route(s) (existing upstream namespace exists, but custom Sunbi route contract should be validated explicitly)
+- [ ] `lib/routes/spec/youtube.ts` (+ optional membership variant)
+- [ ] `lib/routes/spec/viki.ts`
+- [ ] `lib/routes/spec/weverse.ts`
+- [ ] `lib/routes/spec/bubble.ts`
+- [ ] `lib/routes/spec/netflix.ts` (validate contract vs upstream `lib/routes/netflix/` and Sunbi ingestion)
 
 For each remaining route:
 
@@ -79,7 +79,7 @@ For each remaining route:
 ## 7) Definition of Done
 
 - [ ] All target routes implemented and returning valid JSON feed
-- [ ] `_extra` contract stable across all Sunbi routes
+- [ ] `_extra` / `SpecExtra` contract stable across all shipped **SPEC** routes
 - [ ] CI/local quality checks green (`build:routes`, lint, tests)
 - [ ] Production instance reachable and protected by `ACCESS_KEY`
 - [ ] Runbook dry-run completed end-to-end
