@@ -6,7 +6,7 @@ interface SpecExtraBase {
      * e.g. "youtube/video", "netflix/episode"
      */
     type: string;
-    platform: 'youtube' | 'viki' | 'weverse' | 'bubble' | 'netflix';
+    platform: 'youtube' | 'viki' | 'weverse' | 'bubble' | 'netflix' | 'naver-blog' | 'naver-webtoon';
     /** Canonical human-readable URL for this item (same as DataItem.link). */
     sourceUrl: string;
     /** Stable platform-specific item ID. */
@@ -58,12 +58,31 @@ export interface SpecExtraBubble extends SpecExtraBase {
 export interface SpecExtraNetflix extends SpecExtraBase {
     type: 'netflix/episode' | 'netflix/film';
     platform: 'netflix';
+    netflixTitleId: string;
+    tmdbSeriesId: string;
+    tmdbEpisodeId?: number;
+    imdbId: string;
+    thumbnailUrl: string;
+    subtitleStatus: 'none' | 'captured' | 'processing' | 'done';
+    captionLanguages: string[];
+}
+
+export interface SpecExtraNaverBlog extends SpecExtraBase {
+    type: 'naver/blog/post';
+    platform: 'naver-blog';
+    blogId: string;
+    authorId: string;
+}
+
+export interface SpecExtraNaverWebtoon extends SpecExtraBase {
+    type: 'naver/webtoon/episode';
+    platform: 'naver-webtoon';
     titleId: string;
-    seasonNumber?: number;
-    episodeNumber?: number;
-    maturityRating?: string;
+    episodeNumber: number;
+    /** Populated by a downstream OCR job; empty array at ingest time. */
+    panelImageUrls: string[];
 }
 
 // ─── Union ───────────────────────────────────────────────────────────────────
 
-export type SpecExtra = SpecExtraYoutube | SpecExtraViki | SpecExtraWeverse | SpecExtraBubble | SpecExtraNetflix;
+export type SpecExtra = SpecExtraYoutube | SpecExtraViki | SpecExtraWeverse | SpecExtraBubble | SpecExtraNetflix | SpecExtraNaverBlog | SpecExtraNaverWebtoon;
